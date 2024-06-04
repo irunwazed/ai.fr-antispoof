@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    Hello word
+
+
+    <button onclick="checkImage()">Ambil Gambar</button>
+    <div>
+        <video autoplay="true" id="video-webcam">
+            Browsermu tidak mendukung bro, upgrade donk!
+        </video>
+    </div>
+    <div id="div1">
+
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+
+    <script type="text/javascript">
+        // seleksi elemen video
+        var video = document.querySelector("#video-webcam");
+
+        // minta izin user
+        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia || navigator.oGetUserMedia;
+
+        // jika user memberikan izin
+        if (navigator.getUserMedia) {
+            // jalankan fungsi handleVideo, dan videoError jika izin ditolak
+            navigator.getUserMedia({ video: true }, handleVideo, videoError);
+        }
+
+        // fungsi ini akan dieksekusi jika  izin telah diberikan
+        function handleVideo(stream) {
+            video.srcObject = stream;
+        }
+
+        // fungsi ini akan dieksekusi kalau user menolak izin
+        function videoError(e) {
+            // do something
+            alert("Izinkan menggunakan webcam untuk demo!")
+        }
+
+        function urltoFile(url, filename, mimeType) {
+            if (url.startsWith('data:')) {
+                var arr = url.split(','),
+                    mime = arr[0].match(/:(.*?);/)[1],
+                    bstr = atob(arr[arr.length - 1]),
+                    n = bstr.length,
+                    u8arr = new Uint8Array(n);
+                while (n--) {
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                var file = new File([u8arr], filename, { type: mime || mimeType });
+                return Promise.resolve(file);
+            }
+            return fetch(url)
+                .then(res => res.arrayBuffer())
+                .then(buf => new File([buf], filename, { type: mimeType }));
+        }
+
+
+        async function checkImage() {
+
+            let img = takeSnapshot();
+            console.log("img", img)
+
+            let response = await $.ajax({
+                type: "POST",
+                url: '/check-image',
+                dataType: "json",
+                data: {
+                    id: 1,
+                    image: img
+                },
+                headers: {
+                    "ngrok-skip-browser-warning": "69420",
+                },
+                success: function (response) {
+                    //if request if made successfully then the response represent the data
+                    console.log("response", response)
+                    if(response.status == 200 && response.isReal){
+                        alert("you are REAL")
+                    }else{
+                        alert("you are FAKE")
+                    }
+                    // $("#div1").empty().append(response);
+                },
+                error: (err) => {
+                    console.log("err", err)
+                }
+            });
+        }
+
+        function takeSnapshot() {
+            // buat elemen img
+            var img = document.createElement('img');
+            var context;
+
+            // ambil ukuran video
+            var width = video.offsetWidth
+                , height = video.offsetHeight;
+
+            // buat elemen canvas
+            canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+
+            // ambil gambar dari video dan masukan 
+            // ke dalam canvas
+            context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, width, height);
+
+            // render hasil dari canvas ke elemen img
+            img.src = canvas.toDataURL('image/png');
+            // console.log("img", img)
+            // document.body.appendChild(img);
+
+            return img.src;
+
+
+            //Usage example:
+            // urltoFile(img.src, 'image.png', 'text/plain', 'image/png')
+            //     .then(function (file) { console.log(file); });
+        }
+    </script>
+</body>
+
+</html>
